@@ -16,9 +16,16 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          # 1. Add the KDE tap so brew can find the libraries
+          brew tap kde-mac/kde
+          
+          # 2. Install the necessary tools and libraries
+          # Note: we use the 'kf6-' prefix or the full path from the tap
           brew install extra-cmake-modules qt@6 qtkeychain karchive libp11 librsvg
-          brew install kguiaddons kcoreaddons kconfig ki18n
+          brew install kde-mac/kde/kf6-kguiaddons kde-mac/kde/kf6-kcoreaddons kde-mac/kde/kf6-kconfig kde-mac/kde/kf6-ki18n
+          
           echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
+
 
       - name: Import Certificates
         env:
