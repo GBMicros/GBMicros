@@ -10,7 +10,7 @@ jobs:
     runs-on: macos-14 # Uses a modern M2/M3 Mac runner
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -65,7 +65,7 @@ jobs:
           xcrun stapler staple Nextcloud-Custom.pkg
 
       - name: Upload Finished Client
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Nextcloud-macOS-Signed
           path: Nextcloud-Custom.pkg
