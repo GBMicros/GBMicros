@@ -18,8 +18,15 @@ jobs:
         run: |
           brew tap homebrew/cask
           brew install --cask inkscape
-          # Only install the essentials that are actually available
+          
           brew install extra-cmake-modules qt@6 qtkeychain karchive libp11 imagemagick
+          
+          brew tap KDAB/tap
+          brew install kdsingleapplication-qt6
+          
+          brew tap kde-mac/kde https://invent.kde.org/packaging/homebrew-kde.git
+          brew install kde-mac/kde/kf6-kguiaddons kde-mac/kde/kf6-kcoreaddons kde-mac/kde/kf6-ki18n
+          
           echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
 
       - name: Import Certificates
@@ -53,6 +60,7 @@ jobs:
             -DGENERATE_ICONS=OFF
           make -j$(sysctl -n hw.ncpu)
           make install
+
 
       - name: Code Sign and Notarize
         env:
