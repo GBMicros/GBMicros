@@ -67,8 +67,8 @@ jobs:
             -DBUILD_SHELL_INTEGRATION=ON \
             -DBUILD_UPDATER=OFF \
             -DBUILD_OWNCLOUD_OSX_BUNDLE=ON \
-            -DKDSingleApplication-qt6_DIR="/opt/homebrew/lib/cmake/KDSingleApplication-qt6"
-            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
+            -DKDSingleApplication-qt6_DIR="/opt/homebrew/lib/cmake/KDSingleApplication-qt6" \
+            -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules) \
             -DCMAKE_BUILD_TYPE=Release
           make -j$(sysctl -n hw.ncpu)
           make install
