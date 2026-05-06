@@ -16,7 +16,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          brew install qt@6 cmake openssl@3 qtkeychain karchive
+          brew install qt@6 qtkeychain karchive
           echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
 
       - name: Import Certificates
