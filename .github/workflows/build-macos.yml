@@ -32,11 +32,11 @@ jobs:
           security unlock-keychain -p "" $KEYCHAIN_PATH
 
           # Import App Cert
-          echo $APP_P12 | base64 --decode > cert_app.p12
+          echo "$APP_P12" | base64 --decode > cert_app.p12
           security import cert_app.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/codesign
           
           # Import Installer Cert
-          echo $INST_P12 | base64 --decode > cert_inst.p12
+          echo "$INST_P12" | base64 --decode > cert_inst.p12
           security import cert_inst.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/productsign
 
       - name: Compile Nextcloud Client
