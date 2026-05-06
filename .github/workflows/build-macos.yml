@@ -42,7 +42,14 @@ jobs:
       - name: Compile Nextcloud Client
         run: |
           rm -rf build && mkdir build && cd build
-          cmake .. -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" -DCMAKE_BUILD_TYPE=Release -DWITH_SINGLE_APPLICATION=OFF -DBUILD_KDSINGLEAPPLICATION=OFF -DBUILD_TESTING=OFF -DUSE_KDSINGLEAPPLICATION=OFF
+              cmake .. \
+              -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DWITH_SINGLE_APPLICATION=OFF \
+              -DBUILD_KDSINGLEAPPLICATION=OFF \
+              -DUSE_KDSINGLEAPPLICATION=OFF \
+              -DKDSingleApplication-qt6_DIR=${{ github.workspace }}/3rdparty/kdsingleapplication \
+              -DBUILD_TESTING=OFF
           make -j$(sysctl -n hw.ncpu)
           make install
 
