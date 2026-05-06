@@ -54,7 +54,8 @@ jobs:
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
             -DCMAKE_BUILD_TYPE=Release \
             -DWITH_SINGLE_APPLICATION=OFF \
-            -DBUILD_TESTING=OFF
+            -DBUILD_TESTING=OFF \
+            -DSVG_CONVERTER=$(brew --prefix qt@6)/share/qt/libexec/rcc # Use Qt's Resource Compiler
           make -j$(sysctl -n hw.ncpu)
           make install
 
