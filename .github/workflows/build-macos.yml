@@ -16,7 +16,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          brew install extra-cmake-modules qt@6 qtkeychain karchive libp11 kdsingleapplication
+          brew install extra-cmake-modules qt@6 qtkeychain karchive libp11 kd-single-application
           echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
 
       - name: Import Certificates
