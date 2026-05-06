@@ -46,6 +46,8 @@ jobs:
           sed -i '' 's/find_package(KDSingleApplication-qt6 REQUIRED)/# find_package(KDSingleApplication-qt6)/g' CMakeLists.txt
           sed -i '' 's/find_package(KF6GuiAddons REQUIRED)/# find_package(KF6GuiAddons)/g' CMakeLists.txt
           sed -i '' 's/find_package(KF6Config REQUIRED)/# find_package(KF6Config)/g' CMakeLists.txt
+          sed -i '' 's/find_package(KF6GuiAddons REQUIRED)/# find_package(KF6GuiAddons)/g' src/gui/CMakeLists.txt
+          sed -i '' 's/find_package(KF6GuiAddons)/# find_package(KF6GuiAddons)/g' src/gui/CMakeLists.txt
           sed -i '' 's/find_package(KF6CoreAddons REQUIRED)/# find_package(KF6CoreAddons)/g' CMakeLists.txt
           sed -i '' 's/find_package(KF6I18n REQUIRED)/# find_package(KF6I18n)/g' CMakeLists.txt
           
@@ -55,7 +57,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DWITH_SINGLE_APPLICATION=OFF \
             -DBUILD_TESTING=OFF \
-            -DSVG_CONVERTER=$(brew --prefix imagemagick)/bin/convert
+            -DSVG_CONVERTER=/usr/bin/sips
           make -j$(sysctl -n hw.ncpu)
           make install
 
