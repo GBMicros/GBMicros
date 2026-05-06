@@ -17,7 +17,7 @@ jobs:
       - name: Install Dependencies
         run: |
           # Only install the essentials that are actually available
-          brew install extra-cmake-modules qt@6 qtkeychain karchive libp11 librsvg
+          brew install extra-cmake-modules qt@6 qtkeychain karchive libp11 imagemagick
           echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
 
       - name: Import Certificates
@@ -55,7 +55,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DWITH_SINGLE_APPLICATION=OFF \
             -DBUILD_TESTING=OFF \
-            -DSVG_CONVERTER=$(brew --prefix qt@6)/share/qt/libexec/rcc # Use Qt's Resource Compiler
+            -DSVG_CONVERTER=$(brew --prefix imagemagick)/bin/convert
           make -j$(sysctl -n hw.ncpu)
           make install
 
