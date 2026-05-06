@@ -1,0 +1,71 @@
+name: Build and Sign Nextcloud Client
+on:
+  push:
+    branches:
+      - master   # Tell it specifically to watch the master branch
+  workflow_dispatch: # This adds a "Run manually" button to the GitHub UI
+
+jobs:
+  build-macos:
+    runs-on: macos-14 # Uses a modern M2/M3 Mac runner
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        run: |
+          brew install qt@6 cmake openssl@3 qtkeychain karchive
+          echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
+
+      - name: Import Certificates
+        env:
+          APP_P12: ${{ secrets.MACOS_APP_P12 }}
+          INST_P12: ${{ secrets.MACOS_INSTALLER_P12 }}
+          P12_PWD: ${{ secrets.P12_PASSWORD }}
+        run: |
+          # Create a temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          security create-keychain -p "" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "" $KEYCHAIN_PATH
+
+          # Import App Cert
+          echo $APP_P12 | base64 --decode > cert_app.p12
+          security import cert_app.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/codesign
+          
+          # Import Installer Cert
+          echo $INST_P12 | base64 --decode > cert_inst.p12
+          security import cert_inst.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/productsign
+
+      - name: Compile Nextcloud Client
+        run: |
+          mkdir build && cd build
+          cmake .. -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6) -DCMAKE_BUILD_TYPE=Release
+          make -j$(sysctl -n hw.ncpu)
+          make install
+
+      - name: Code Sign and Notarize
+        env:
+          KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: |
+          # 1. Sign the .app bundle
+          codesign --deep --force --options runtime --sign "Developer ID Application: Gary Wayne Bentley" build/bin/Nextcloud.app
+          
+          # 2. Package into a .pkg
+          productbuild --component build/bin/Nextcloud.app /Applications --sign "Developer ID Installer: Gary Wayne Bentley" Nextcloud-Custom.pkg
+          
+          # 3. Notarize with Apple
+          echo "${{ secrets.NOTARY_P8 }}" | base64 --decode > notary.p8
+          xcrun notarytool submit Nextcloud-Custom.pkg --key-id "$KEY_ID" --issuer "$ISSUER_ID" --key notary.p8 --wait
+          
+          # 4. Staple the ticket so it works offline
+          xcrun stapler staple Nextcloud-Custom.pkg
+
+      - name: Upload Finished Client
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nextcloud-macOS-Signed
+          path: Nextcloud-Custom.pkg
