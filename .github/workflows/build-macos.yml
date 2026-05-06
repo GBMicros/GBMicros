@@ -25,7 +25,7 @@ jobs:
           brew install kdsingleapplication-qt6
           
           brew tap kde-mac/kde https://invent.kde.org/packaging/homebrew-kde.git
-          brew install kde-mac/kde/kf6-kguiaddons kde-mac/kde/kf6-kcoreaddons kde-mac/kde/kf6-ki18n
+          brew install kde-mac/kde/kf5-kguiaddons kde-mac/kde/kf6-kcoreaddons kde-mac/kde/kf6-ki18n
           
           echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
 
