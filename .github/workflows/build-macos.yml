@@ -16,7 +16,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          brew install caskformula/caskformula/inkscape --HEAD --branch-0.92
+          brew install caskformula/caskformula/inkscape
           # Only install the essentials that are actually available
           brew install extra-cmake-modules qt@6 qtkeychain karchive libp11 imagemagick
           echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
