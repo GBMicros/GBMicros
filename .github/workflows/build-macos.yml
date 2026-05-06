@@ -16,6 +16,8 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          brew tap homebrew/core
+          brew install kdsingleapplication
           brew install extra-cmake-modules qt@6 qtkeychain karchive libp11
           echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
 
