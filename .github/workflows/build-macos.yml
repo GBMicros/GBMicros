@@ -16,8 +16,6 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          brew tap homebrew/core
-          brew install kdsingleapplication
           brew install extra-cmake-modules qt@6 qtkeychain karchive libp11
           echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
 
@@ -44,7 +42,7 @@ jobs:
       - name: Compile Nextcloud Client
         run: |
           rm -rf build && mkdir build && cd build
-          cmake .. -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" -DCMAKE_BUILD_TYPE=Release -DWITH_SINGLE_APPLICATION=OFF -DBUILD_KDSINGLEAPPLICATION=OFF -DBUILD_TESTING=OFF
+          cmake .. -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" -DCMAKE_BUILD_TYPE=Release -DWITH_SINGLE_APPLICATION=OFF -DBUILD_KDSINGLEAPPLICATION=OFF -DBUILD_TESTING=OFF -DUSE_KDSINGLEAPPLICATION=OFF
           make -j$(sysctl -n hw.ncpu)
           make install
 
