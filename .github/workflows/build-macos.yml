@@ -25,7 +25,7 @@ jobs:
           brew install kdsingleapplication-qt6
           
           brew tap kde-mac/kde https://invent.kde.org/packaging/homebrew-kde.git
-          brew install kde-mac/kde/kf5-kguiaddons kde-mac/kde/kf6-kcoreaddons kde-mac/kde/kf6-ki18n
+          brew install kde-mac/kde/kf5-kguiaddons kde-mac/kde/kf5-kcoreaddons kde-mac/kde/kf5-ki18n
           
           echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
 
@@ -54,10 +54,7 @@ jobs:
           rm -rf build && mkdir build && cd build
           cmake .. \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DWITH_SINGLE_APPLICATION=OFF \
-            -DBUILD_TESTING=OFF \
-            -DGENERATE_ICONS=OFF
+            -DCMAKE_BUILD_TYPE=Release
           make -j$(sysctl -n hw.ncpu)
           make install
 
