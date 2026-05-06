@@ -16,7 +16,8 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          brew install extra-cmake-modules qt@6 qtkeychain karchive libp11 librsvg kf6-kguiaddons
+          brew install extra-cmake-modules qt@6 qtkeychain karchive libp11 librsvg
+          brew install kguiaddons kcoreaddons kconfig ki18n
           echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
 
       - name: Import Certificates
@@ -45,7 +46,7 @@ jobs:
           
           rm -rf build && mkdir build && cd build
               cmake .. \
-              -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules);$(brew --prefix kf6-kguiaddons)" \
+              -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules);$(brew --prefix kguiaddons);$(brew --prefix kcoreaddons);$(brew --prefix kconfig);$(brew --prefix ki18n)" \
               -DCMAKE_BUILD_TYPE=Release \
               -DKDSingleApplication-qt6_DIR=$(pwd) \
               -DWITH_SINGLE_APPLICATION=OFF \
