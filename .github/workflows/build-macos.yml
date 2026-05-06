@@ -16,6 +16,8 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          brew tap homebrew/cask
+          brew cask install inkscape
           # Only install the essentials that are actually available
           brew install extra-cmake-modules qt@6 qtkeychain karchive libp11 imagemagick
           echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
