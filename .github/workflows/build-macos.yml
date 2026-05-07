@@ -45,21 +45,17 @@ jobs:
           # Import Certs
           echo -n "$APP_P12" | base64 --decode > cert_app.p12
           security import cert_app.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/codesign
+          
           echo -n "$INST_P12" | base64 --decode > cert_inst.p12
-          security import cert_inst.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/productsign
+          # Use -T /usr/bin/codesign here too for better compatibility
+          security import cert_inst.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/codesign
           
-          # CRITICAL: Allow codesign to access the keychain without a prompt
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" $KEYCHAIN_PATH
-          
-          # Fix Keychain Search Path
           security list-keychains -d user -s $KEYCHAIN_PATH $(security list-keychains -d user | xargs)
 
-          # Automatically find and save the Identity Hashes
-          APP_ID=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Developer ID Application" | awk '{print $2}')
-          INST_ID=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Developer ID Installer" | awk '{print $2}')
-          
-          echo "Using App ID: $APP_ID"
-          echo "Using Inst ID: $INST_ID"
+          # Find IDs (Grepping for 'Application' and 'Installer' specifically)
+          APP_ID=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Application" | awk '{print $2}' | head -n 1)
+          INST_ID=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Installer" | awk '{print $2}' | head -n 1)
           
           echo "SIGNING_IDENTITY_APP=$APP_ID" >> $GITHUB_ENV
           echo "SIGNING_IDENTITY_INST=$INST_ID" >> $GITHUB_ENV
@@ -91,24 +87,23 @@ jobs:
           KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
           ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
         run: |
-          # Use the app path found in the list step (usually GBMicros.app)
-          APP_PATH=$(find build/bin -name "GBMicros.app" -maxdepth 1)
+          # Use *.app to avoid case-sensitivity issues
+          APP_PATH=$(find build/bin -name "*.app" -maxdepth 1 | head -n 1)
           echo "Signing: $APP_PATH"
 
-          # 1. Sign using the hash we found automatically
-          codesign --deep --force --options runtime \
+          # 1. Sign App
+          codesign --deep --force --options runtime --timestamp \
             --keychain "$KEYCHAIN_PATH" \
             --sign "$SIGNING_IDENTITY_APP" "$APP_PATH"
           
-          # 2. Package into a .pkg
+          # 2. Package (Fallback to App Identity if Inst Identity is still missing)
+          PKG_IDENTITY="${SIGNING_IDENTITY_INST:-$SIGNING_IDENTITY_APP}"
           productbuild --component "$APP_PATH" /Applications \
-            --sign "$SIGNING_IDENTITY_INST" Nextcloud-Custom.pkg
+            --sign "$PKG_IDENTITY" Nextcloud-Custom.pkg
           
-          # 3. Notarize
+          # 3. Notarize & Staple
           echo "${{ secrets.NOTARY_P8 }}" | base64 --decode > notary.p8
           xcrun notarytool submit Nextcloud-Custom.pkg --key-id "$KEY_ID" --issuer "$ISSUER_ID" --key notary.p8 --wait
-          
-          # 4. Staple
           xcrun stapler staple Nextcloud-Custom.pkg
 
       - name: Upload Finished Client
