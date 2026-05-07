@@ -1,9 +1,8 @@
 name: Build and Sign Nextcloud Client
 on:
   push:
-    branches:
-      - master   # Tell it specifically to watch the master branch
-  workflow_dispatch: # This adds a "Run manually" button to the GitHub UI
+    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build-macos:
@@ -17,6 +16,7 @@ jobs:
       - name: Install Dependencies
         run: |
           brew update
+          
           brew tap homebrew/cask
           brew install --cask inkscape
           
@@ -31,34 +31,44 @@ jobs:
           
           echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
 
-      - name: Import Certificates
+      - name: Import and Verify Certificates
         env:
           APP_P12: ${{ secrets.MACOS_APP_P12 }}
           INST_P12: ${{ secrets.MACOS_INSTALLER_P12 }}
           P12_PWD: ${{ secrets.P12_PASSWORD }}
         run: |
-          # Create a temporary keychain
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
           security create-keychain -p "" $KEYCHAIN_PATH
           security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
           security unlock-keychain -p "" $KEYCHAIN_PATH
 
-          # Import App Cert
+          # Import Certs
           echo -n "$APP_P12" | base64 --decode > cert_app.p12
           security import cert_app.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/codesign
-          
-          # Import Installer Cert
           echo -n "$INST_P12" | base64 --decode > cert_inst.p12
           security import cert_inst.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/productsign
+          
+          # CRITICAL: Allow codesign to access the keychain without a prompt
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" $KEYCHAIN_PATH
+          
+          # Fix Keychain Search Path
+          security list-keychains -d user -s $KEYCHAIN_PATH $(security list-keychains -d user | xargs)
+
+          # Automatically find and save the Identity Hashes
+          APP_ID=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Developer ID Application" | awk '{print $2}')
+          INST_ID=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Developer ID Installer" | awk '{print $2}')
+          
+          echo "Using App ID: $APP_ID"
+          echo "Using Inst ID: $INST_ID"
+          
+          echo "SIGNING_IDENTITY_APP=$APP_ID" >> $GITHUB_ENV
+          echo "SIGNING_IDENTITY_INST=$INST_ID" >> $GITHUB_ENV
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
 
       - name: Compile Nextcloud Client
         run: |
           rm -rf build && mkdir build && cd build
-          
-          INSTALL_DIR=$GITHUB_WORKSPACE/client-install
-          
           cmake .. \
-            -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR \
             -DAPPLICATION_NAME="GBMicros" \
             -DMACOSX_BUNDLE_BUNDLE_NAME="GBMicros" \
             -DAPPLICATION_REV_DOMAIN="uk.co.gbmicros" \
@@ -71,23 +81,27 @@ jobs:
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
             -DCMAKE_BUILD_TYPE=Release
           make -j$(sysctl -n hw.ncpu)
-          #make install
 
-          echo "INSTALL_DIR=$INSTALL_DIR" >> $GITHUB_ENV
-          
+      - name: List Build Results
+        run: ls -R build/bin
+
       - name: Code Sign and Notarize
         env:
           KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
           ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
         run: |
-          # Define the app path clearly
-          APP_PATH="build/bin/GBMicros.app"
-          
-          # 1. Sign the .app bundle
-          codesign --deep --force --options runtime --sign "Developer ID Application: Gary Wayne Bentley" "$APP_PATH"
+          # Use the app path found in the list step (usually GBMicros.app)
+          APP_PATH=$(find build/bin -name "*.app" -maxdepth 1)
+          echo "Signing: $APP_PATH"
+
+          # 1. Sign using the hash we found automatically
+          codesign --deep --force --options runtime \
+            --keychain "$KEYCHAIN_PATH" \
+            --sign "$SIGNING_IDENTITY_APP" "$APP_PATH"
           
           # 2. Package into a .pkg
-          productbuild --component "$APP_PATH" /Applications --sign "Developer ID Installer: Gary Wayne Bentley" Nextcloud-Custom.pkg
+          productbuild --component "$APP_PATH" /Applications \
+            --sign "$SIGNING_IDENTITY_INST" Nextcloud-Custom.pkg
           
           # 3. Notarize
           echo "${{ secrets.NOTARY_P8 }}" | base64 --decode > notary.p8
@@ -97,7 +111,7 @@ jobs:
           xcrun stapler staple Nextcloud-Custom.pkg
 
       - name: Upload Finished Client
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: Nextcloud-macOS-Signed
           path: Nextcloud-Custom.pkg
