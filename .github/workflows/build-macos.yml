@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-macos:
-    runs-on: macos-14 # Uses a modern M2/M3 Mac runner
+    runs-on: macos-13
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
@@ -16,6 +16,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          brew update
           brew tap homebrew/cask
           brew install --cask inkscape
           
@@ -61,6 +62,7 @@ jobs:
             -DMACOS_APP_GROUP_ID="group.uk.co.gbmicros.storage" \
             -DBUILD_VFS_FILEPROVIDER=ON \
             -DKDSingleApplication-qt6_DIR="/opt/homebrew/lib/cmake/KDSingleApplication-qt6" \
+            -DQt6_DIR="$(brew --prefix qt@6)/lib/cmake/Qt6" \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
             -DCMAKE_BUILD_TYPE=Release
           make -j$(sysctl -n hw.ncpu)
