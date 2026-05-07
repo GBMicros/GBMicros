@@ -79,6 +79,7 @@ jobs:
             -DKDSingleApplication-qt6_DIR="$(brew --prefix kdsingleapplication-qt6)/lib/cmake/KDSingleApplication-qt6" \
             -DQt6_DIR="$(brew --prefix qt@6)/lib/cmake/Qt6" \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
+            -DBUILD_TESTING=OFF \
             -DCMAKE_BUILD_TYPE=Release
           make -j$(sysctl -n hw.ncpu)
 
@@ -91,7 +92,7 @@ jobs:
           ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
         run: |
           # Use the app path found in the list step (usually GBMicros.app)
-          APP_PATH=$(find build/bin -name "*.app" -maxdepth 1)
+          APP_PATH=$(find build/bin -name "GBMicros.app" -maxdepth 1)
           echo "Signing: $APP_PATH"
 
           # 1. Sign using the hash we found automatically
