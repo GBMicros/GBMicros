@@ -42,20 +42,22 @@ jobs:
           security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
           security unlock-keychain -p "" $KEYCHAIN_PATH
 
-          # Import Certs
+          # Import with explicit tool access for both App and Installer tools
           echo -n "$APP_P12" | base64 --decode > cert_app.p12
-          security import cert_app.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/codesign
+          security import cert_app.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/codesign -T /usr/bin/productbuild -T /usr/bin/productsign
           
           echo -n "$INST_P12" | base64 --decode > cert_inst.p12
-          # Use -T /usr/bin/codesign here too for better compatibility
-          security import cert_inst.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/codesign
+          security import cert_inst.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/codesign -T /usr/bin/productbuild -T /usr/bin/productsign
           
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" $KEYCHAIN_PATH
+          # CRITICAL: Grant access to the partition list for all relevant tools
+          security set-key-partition-list -S apple-tool:,apple:,codesign:,productbuild:,productsign: -s -k "" $KEYCHAIN_PATH
+          
+          # Fix Keychain Search Path
           security list-keychains -d user -s $KEYCHAIN_PATH $(security list-keychains -d user | xargs)
 
-          # Find IDs (Grepping for 'Application' and 'Installer' specifically)
-          APP_ID=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Application" | awk '{print $2}' | head -n 1)
-          INST_ID=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Installer" | awk '{print $2}' | head -n 1)
+          # Extract IDs
+          APP_ID=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Developer ID Application" | awk '{print $2}' | head -n 1)
+          INST_ID=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Developer ID Installer" | awk '{print $2}' | head -n 1)
           
           echo "SIGNING_IDENTITY_APP=$APP_ID" >> $GITHUB_ENV
           echo "SIGNING_IDENTITY_INST=$INST_ID" >> $GITHUB_ENV
@@ -79,31 +81,30 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release
           make -j$(sysctl -n hw.ncpu)
 
-      - name: List Build Results
-        run: ls -R build/bin
-
       - name: Code Sign and Notarize
         env:
           KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
           ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
         run: |
-          # Use *.app to avoid case-sensitivity issues
           APP_PATH=$(find build/bin -name "*.app" -maxdepth 1 | head -n 1)
           echo "Signing: $APP_PATH"
 
-          # 1. Sign App
+          # 1. Sign App (Always needs --timestamp for notarization)
           codesign --deep --force --options runtime --timestamp \
             --keychain "$KEYCHAIN_PATH" \
             --sign "$SIGNING_IDENTITY_APP" "$APP_PATH"
           
-          # 2. Package (Fallback to App Identity if Inst Identity is still missing)
-          PKG_IDENTITY="${SIGNING_IDENTITY_INST:-$SIGNING_IDENTITY_APP}"
+          # 2. Package into a .pkg
+          # IMPORTANT: We use --keychain here to ensure productbuild looks in the right place
           productbuild --component "$APP_PATH" /Applications \
-            --sign "$PKG_IDENTITY" Nextcloud-Custom.pkg
+            --keychain "$KEYCHAIN_PATH" \
+            --sign "$SIGNING_IDENTITY_INST" Nextcloud-Custom.pkg
           
-          # 3. Notarize & Staple
+          # 3. Notarize
           echo "${{ secrets.NOTARY_P8 }}" | base64 --decode > notary.p8
           xcrun notarytool submit Nextcloud-Custom.pkg --key-id "$KEY_ID" --issuer "$ISSUER_ID" --key notary.p8 --wait
+          
+          # 4. Staple
           xcrun stapler staple Nextcloud-Custom.pkg
 
       - name: Upload Finished Client
