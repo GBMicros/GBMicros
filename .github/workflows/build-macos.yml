@@ -25,7 +25,8 @@ jobs:
           security unlock-keychain -p "" $KEYCHAIN_PATH
 
           curl -L -o AppleDeveloperID.cer https://www.apple.com/certificateauthority/AppleDeveloperIDCA.cer
-          security import AppleDeveloperID.cer -k $KEYCHAIN_PATH -t cert
+          openssl x509 -inform DER -in AppleDeveloperID.cer -out AppleDeveloperID.pem
+          security import AppleDeveloperID.pem -k $KEYCHAIN_PATH -t cert
 
           # Import with explicit tool access for both App and Installer tools
           echo -n "$APP_P12" | base64 --decode > cert_app.p12
