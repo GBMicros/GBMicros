@@ -26,10 +26,10 @@ jobs:
             security default-keychain -s $KEYCHAIN_PATH
 
             # 1. Import Intermediates (Crucial for validity)
-            curl -LO https://www.apple.com/certificateauthority/DeveloperIDCA.cer
-            curl -LO https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
-            security import DeveloperIDCA.cer -k $KEYCHAIN_PATH -t cert
-            security import DeveloperIDG2CA.cer -k $KEYCHAIN_PATH -t cert
+            curl -LO https://www.apple.com/certificateauthority/AppleDeveloperIDCA.cer
+            curl -LO https://www.apple.com/certificateauthority/AppleDeveloperIDG2CA.cer
+            security import AppleDeveloperIDCA.cer -k $KEYCHAIN_PATH -t cert
+            security import AppleDeveloperIDG2CA.cer -k $KEYCHAIN_PATH -t cert
             
             #security add-trusted-cert -d -r trustRoot -k $KEYCHAIN_PATH DeveloperIDCA.cer
             #security add-trusted-cert -d -r trustRoot -k $KEYCHAIN_PATH DeveloperIDG2CA.cer
