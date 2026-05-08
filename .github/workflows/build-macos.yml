@@ -79,41 +79,38 @@ jobs:
           NOTARY_P8: ${{ secrets.NOTARY_P8 }}
         run: |
           APP_PATH=$(find build/bin -name "*.app" -maxdepth 1 | head -n 1)
-          ENTITLEMENTS="build/admin/osx/macosx.entitlements"
-
-          echo "Signing: $APP_PATH"
-          echo "Using entitlements: $ENTITLEMENTS"
-
-          if [ -d "$APP_PATH/Contents/PlugIns" ]; then
-            echo "Signing PlugIns..."
-            find "$APP_PATH/Contents/PlugIns" -name "*.appex" -exec codesign --force --options runtime --timestamp --entitlements "$ENTITLEMENTS" --sign "$SIGNING_IDENTITY_APP" {} \;
-          fi
-
-          if [ -d "$APP_PATH/Contents/Frameworks" ]; then
-            echo "Signing Frameworks..."
-            find "$APP_PATH/Contents/Frameworks" -name "*.framework" -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY_APP" {} \;
-          fi
+          ENTITLEMENTS="build/admin/osx/macosx.entitlements" # Ensure this is your MANUALLY edited file
     
-          # 3. Sign the Main App Bundle (Using --deep to catch the internal binary)
-          echo "Signing main bundle and internal binaries..."
+          echo "Signing: $APP_PATH"
+    
+          # 1. Strip any existing signatures to prevent "nesting" errors
+          echo "Stripping old signatures..."
+          find "$APP_PATH" -type f -exec codesign --remove-signature {} + 2>/dev/null || true
+
+          # 2. Sign internal binary EXPLICITLY with entitlements
+          # Nextcloud needs the main binary to have the entitlements baked in directly
+          echo "Signing internal binary..."
+          codesign --force --options runtime --timestamp \
+            --entitlements "$ENTITLEMENTS" \
+            --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/MacOS/gbmicros"
+
+          # 3. Sign the whole bundle (Deep)
+          echo "Signing main bundle..."
           codesign --force --options runtime --timestamp --deep \
             --entitlements "$ENTITLEMENTS" \
             --sign "$SIGNING_IDENTITY_APP" "$APP_PATH"
-          
-          # 4. Package into a .pkg
-          # IMPORTANT: We use --keychain here to ensure productbuild looks in the right place
+
+          # 4. Verification (Check if the signature is actually valid locally)
+          codesign --verify --verbose --deep "$APP_PATH"
+          codesign -d --entitlements :- "$APP_PATH" # This prints the entitlements to the log for you to see
+
+          # 5. Package and Notarize
           productbuild --component "$APP_PATH" /Applications \
             --keychain signing_temp.keychain \
             --sign "$SIGNING_IDENTITY_INST" Nextcloud-Custom.pkg
-            
-          defaults read $(pwd)/$APP_PATH/Contents/Info.plist CFBundleIdentifier
-          
-          # 5. Notarize
+
           echo "$NOTARY_P8" > notary.p8
           xcrun notarytool submit Nextcloud-Custom.pkg --key-id "$KEY_ID" --issuer "$ISSUER_ID" --key notary.p8 --wait
-          
-          # 6. Staple
-          xcrun stapler staple Nextcloud-Custom.pkg
 
       - name: Upload Finished Client
         uses: actions/upload-artifact@v4
