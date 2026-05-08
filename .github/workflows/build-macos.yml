@@ -26,13 +26,7 @@ jobs:
 
           # 1. Download the Developer ID Intermediate (Fixed Link)
           # This is the G1 Intermediate required for Developer ID Installer certs
-          curl -L "https://www.apple.com/certificateauthority/AppleDeveloperIDCA.cer" -o DeveloperID.cer
-          
-          # Check if the file is actually a certificate (not a 404 HTML page)
-          if grep -q "HTML" DeveloperID.cer; then
-            echo "Download failed: Received HTML instead of Certificate. Trying backup link..."
-            curl -L "http://developer.apple.com/certificationauthority/AppleDeveloperIDCA.cer" -o DeveloperID.cer
-          fi
+          curl -L "http://www.apple.com/certificateauthority/AppleDeveloperIDCA.cer" -o DeveloperID.cer
 
           # Import it (No password needed for public certs)
           security import DeveloperID.cer -k $KEYCHAIN_PATH -t cert
