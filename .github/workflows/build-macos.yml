@@ -24,14 +24,14 @@ jobs:
           security find-identity -p codesigning $KEYCHAIN_PATH
           
           # This pulls the names from the keychain automatically
-          APP_NAME=$(security find-identity -v -p codesigning | grep "Developer ID Application" | awk -F '"' '{print $2}' | head -n 1)
-          INST_NAME=$(security find-identity -v -p codesigning | grep "Developer ID Installer" | awk -F '"' '{print $2}' | head -n 1)
+          APP_NAME=$(security find-identity -v -p codesigning | grep "Developer ID Application" | sed -E 's/.*"(.*)".*/\1/' | head -n 1)
+          INST_NAME=$(security find-identity -v -p codesigning | grep "Developer ID Installer" | sed -E 's/.*"(.*)".*/\1/' | head -n 1)
           
           echo "APP_NAME: $APP_NAME"
           echo "INST_NAME: $INST_NAME"
           
-          if [ -z "$APP_NAME" ]; then echo "APP ID NOT FOUND"; exit 1; fi
-          if [ -z "$INST_NAME" ]; then echo "INSTALLER ID NOT FOUND"; exit 1; fi
+          if [ -z "$APP_NAME" ]; then echo "❌ APP ID NOT FOUND"; exit 1; fi
+          if [ -z "$INST_NAME" ]; then echo "❌ INSTALLER ID NOT FOUND"; exit 1; fi
           
           echo "SIGNING_IDENTITY_APP=$APP_NAME" >> $GITHUB_ENV
           echo "SIGNING_IDENTITY_INST=$INST_NAME" >> $GITHUB_ENV
