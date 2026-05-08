@@ -13,24 +13,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Dependencies
-        run: |
-          brew update
-          
-          brew tap homebrew/cask
-          brew install --cask inkscape
-          
-          brew install extra-cmake-modules qt@6 qtkeychain karchive libp11 ki18n
-          
-          brew tap KDAB/tap
-          brew install kdsingleapplication-qt6
-          
-          brew tap kde-mac/kde https://invent.kde.org/packaging/homebrew-kde.git
-          "$(brew --repo kde-mac/kde)/tools/do-caveats.sh"
-          brew install kde-mac/kde/kf5-kguiaddons kde-mac/kde/kf5-kcoreaddons
-          
-          echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
-
       - name: Import and Verify Certificates
         env:
           APP_P12: ${{ secrets.MACOS_APP_P12 }}
@@ -68,6 +50,24 @@ jobs:
           echo "SIGNING_IDENTITY_APP=$APP_NAME" >> $GITHUB_ENV
           echo "SIGNING_IDENTITY_INST=$INST_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
+
+      - name: Install Dependencies
+        run: |
+          brew update
+          
+          brew tap homebrew/cask
+          brew install --cask inkscape
+          
+          brew install extra-cmake-modules qt@6 qtkeychain karchive libp11 ki18n
+          
+          brew tap KDAB/tap
+          brew install kdsingleapplication-qt6
+          
+          brew tap kde-mac/kde https://invent.kde.org/packaging/homebrew-kde.git
+          "$(brew --repo kde-mac/kde)/tools/do-caveats.sh"
+          brew install kde-mac/kde/kf5-kguiaddons kde-mac/kde/kf5-kcoreaddons
+          
+          echo "QT_PATH=$(brew --prefix qt@6)/bin" >> $GITHUB_ENV
 
       - name: Compile Nextcloud Client
         run: |
