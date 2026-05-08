@@ -31,8 +31,8 @@ jobs:
             security import DeveloperIDCA.cer -k $KEYCHAIN_PATH -t cert
             security import DeveloperIDG2CA.cer -k $KEYCHAIN_PATH -t cert
             
-            security add-trusted-cert -d -r trustRoot -k $KEYCHAIN_PATH AppleDeveloperIDCA.cer
-            security add-trusted-cert -d -r trustRoot -k $KEYCHAIN_PATH AppleDeveloperIDG2CA.cer
+            security add-trusted-cert -d -r trustRoot -k $KEYCHAIN_PATH DeveloperIDCA.cer
+            security add-trusted-cert -d -r trustRoot -k $KEYCHAIN_PATH DeveloperIDG2CA.cer
             
             security default-keychain -s $KEYCHAIN_PATH
   
