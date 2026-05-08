@@ -20,28 +20,28 @@ jobs:
           P12_PWD: ${{ secrets.P12_PASSWORD }}
         run: |
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-          security create-keychain -p "" $KEYCHAIN_PATH
+          security create-keychain -p "$P12_PWD" $KEYCHAIN_PATH
           security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "" $KEYCHAIN_PATH
+          security unlock-keychain -p "$P12_PWD" $KEYCHAIN_PATH
 
           # Download and install the Apple Developer ID Intermediate Certificate
-          curl -LO https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
-          security import DeveloperIDG2CA.cer -k $KEYCHAIN_PATH -t cert
+          curl -LO https://www.apple.com/certificateauthority/DeveloperIDCA.cer
+          security import DeveloperIDCA.cer -k $KEYCHAIN_PATH -T /usr/bin/codesign -T /usr/bin/productbuild
           
-          security list-keychains -d user -s $KEYCHAIN_PATH
+          curl -LO https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
+          security import DeveloperIDG2CA.cer -k $KEYCHAIN_PATH -T /usr/bin/codesign -T /usr/bin/productbuild
+          
+          security default-keychain -s $KEYCHAIN_PATH
           
           # 2. Import your P12s
           echo -n "$APP_P12" | base64 --decode > cert_app.p12
-          security import cert_app.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/codesign -T /usr/bin/productbuild
+          security import cert_app.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -A -f pkcs12
           
           echo -n "$INST_P12" | base64 --decode > cert_inst.p12
-          security import cert_inst.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -A -f pkcs12 -T /usr/bin/codesign -T /usr/bin/productbuild
-          
-          # If this fails, the password in your secret is wrong for this specific file
-          openssl pkcs12 -in cert_inst.p12 -passin pass:"$P12_PWD" -nodes -nokeys | grep "subject"
+          security import cert_inst.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -A -f pkcs12
           
           # 3. Setup permissions for macOS 15
-          security set-key-partition-list -S apple-tool:,apple:,codesign:,productbuild: -s -k "" $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple:,codesign:,productbuild: -s -k "$P12_PWD" $KEYCHAIN_PATH
 
           # 4. Debug: This MUST show 2 valid identities now
           security find-identity -v -p codesigning $KEYCHAIN_PATH
