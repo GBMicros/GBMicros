@@ -21,7 +21,7 @@ jobs:
 
       - name: Set Signing Identities
         run: |        
-          security find-identity -p codesigning
+          /usr/bin/security find-identity -v signing_temp.keychain
           
           # This pulls the names from the keychain automatically
           APP_NAME=$(security find-identity -v -p codesigning | grep "Developer ID Application" | sed -E 's/.*"(.*)".*/\1/' | head -n 1)
