@@ -105,6 +105,8 @@ jobs:
           productbuild --component "$APP_PATH" /Applications \
             --keychain signing_temp.keychain \
             --sign "$SIGNING_IDENTITY_INST" Nextcloud-Custom.pkg
+            
+          defaults read $(pwd)/$APP_PATH/Contents/Info.plist CFBundleIdentifier
           
           # 5. Notarize
           echo "$NOTARY_P8" > notary.p8
