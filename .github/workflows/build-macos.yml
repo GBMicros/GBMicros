@@ -42,7 +42,7 @@ jobs:
 
             # 4. Extract Names
             APP_NAME=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Developer ID Application" | awk -F '"' '{print $2}')
-            INST_NAME=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Developer ID Installer" | awk -F '"' '{print $2}')
+            INST_NAME=$(security find-identity -p codesigning $KEYCHAIN_PATH | grep "Developer ID Installer" | awk -F '"' '{print $2}')
 
             echo "APP_NAME: $APP_NAME"
             echo "INST_NAME: $INST_NAME"
