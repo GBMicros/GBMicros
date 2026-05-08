@@ -92,7 +92,7 @@ jobs:
             --sign "$SIGNING_IDENTITY_INST" Nextcloud-Custom.pkg
           
           # 3. Notarize
-          echo "${{ secrets.NOTARY_P8 }}" | base64 --decode > notary.p8
+          echo "${{ secrets.NOTARY_P8 }}" > notary.p8
           xcrun notarytool submit Nextcloud-Custom.pkg --key-id "$KEY_ID" --issuer "$ISSUER_ID" --key notary.p8 --wait
           
           # 4. Staple
