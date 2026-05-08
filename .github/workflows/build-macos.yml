@@ -94,9 +94,9 @@ jobs:
             find "$APP_PATH/Contents/Frameworks" -name "*.framework" -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY_APP" {} \;
           fi
     
-          # 3. Sign the Main App Bundle with Entitlements
-          echo "Signing main bundle..."
-          codesign --force --options runtime --timestamp \
+          # 3. Sign the Main App Bundle (Using --deep to catch the internal binary)
+          echo "Signing main bundle and internal binaries..."
+          codesign --force --options runtime --timestamp --deep \
             --entitlements "$ENTITLEMENTS" \
             --sign "$SIGNING_IDENTITY_APP" "$APP_PATH"
           
@@ -107,7 +107,7 @@ jobs:
             --sign "$SIGNING_IDENTITY_INST" Nextcloud-Custom.pkg
           
           # 5. Notarize
-          echo "${{ secrets.NOTARY_P8 }}" > notary.p8
+          echo "$NOTARY_P8" > notary.p8
           xcrun notarytool submit Nextcloud-Custom.pkg --key-id "$KEY_ID" --issuer "$ISSUER_ID" --key notary.p8 --wait
           
           # 6. Staple
