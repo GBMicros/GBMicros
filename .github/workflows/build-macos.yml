@@ -55,15 +55,15 @@ jobs:
           # Fix Keychain Search Path
           security list-keychains -d user -s $KEYCHAIN_PATH $(security list-keychains -d user | xargs)
 
-          # Extract IDs
-          APP_NAME=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Developer ID Application" | sed -E 's/.*"(.*)"/\1/' || true)
-          INST_NAME=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Developer ID Installer" | sed -E 's/.*"(.*)"/\1/' || true)
+          security find-identity -v -p codesigning
           
+          # Extract IDs
+          APP_NAME=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "XG7B22RY35" | grep "Application" | sed -E 's/.*"(.*)"/\1/')
+          INST_NAME=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "XG7B22RY35" | grep "Installer" | sed -E 's/.*"(.*)"/\1/')
+
           # Ensure both are set correctly
           if [ -z "$APP_NAME" ]; then echo "APP Certificate NOT FOUND"; exit 1; fi
-          if [ -z "$INST_NAME" ]; then echo "INSTALLER Certificate NOT FOUND"; exit 1; fi
-          
-          
+          if [ -z "$INST_NAME" ]; then echo "INSTALLER Certificate NOT FOUND"; exit 1; fi          
           
           echo "SIGNING_IDENTITY_APP=$APP_NAME" >> $GITHUB_ENV
           echo "SIGNING_IDENTITY_INST=$INST_NAME" >> $GITHUB_ENV
