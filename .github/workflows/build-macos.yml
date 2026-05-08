@@ -20,10 +20,7 @@ jobs:
           p12-password: ${{ secrets.P12_PASSWORD }}
 
       - name: Set Signing Identities
-        run: |
-          curl -LO https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
-          security import DeveloperIDG2CA.cer -k signing_temp.keychain -t cert
-        
+        run: |        
           security find-identity -p codesigning
           
           # This pulls the names from the keychain automatically
