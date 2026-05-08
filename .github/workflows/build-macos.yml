@@ -24,11 +24,17 @@ jobs:
           security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
           security unlock-keychain -p "" $KEYCHAIN_PATH
 
-          # 1. Download the Developer ID Intermediate (G1) - Direct Link
-          # We use -L to follow redirects and -k to ignore SSL if the runner's clock is off
-          curl -Lvk "https://www.apple.com/certificateauthority/AppleDeveloperIDCA.cer" -o DeveloperID.cer
+          # 1. Download the Developer ID Intermediate (Fixed Link)
+          # This is the G1 Intermediate required for Developer ID Installer certs
+          curl -L "https://www.apple.com/certificateauthority/AppleDeveloperIDCA.cer" -o DeveloperID.cer
           
-          # Import it specifically as a certificate
+          # Check if the file is actually a certificate (not a 404 HTML page)
+          if grep -q "HTML" DeveloperID.cer; then
+            echo "Download failed: Received HTML instead of Certificate. Trying backup link..."
+            curl -L "http://developer.apple.com/certificationauthority/AppleDeveloperIDCA.cer" -o DeveloperID.cer
+          fi
+
+          # Import it (No password needed for public certs)
           security import DeveloperID.cer -k $KEYCHAIN_PATH -t cert
 
           # 2. Import your P12s
@@ -38,18 +44,16 @@ jobs:
           echo -n "$INST_P12" | base64 --decode > cert_inst.p12
           security import cert_inst.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/codesign -T /usr/bin/productbuild
           
-          # 3. CRITICAL for macOS 15: Fix partition list
+          # 3. Setup permissions for macOS 15
           security set-key-partition-list -S apple-tool:,apple:,codesign:,productbuild: -s -k "" $KEYCHAIN_PATH
-          
-          # 4. Search Path setup
           security list-keychains -d user -s $KEYCHAIN_PATH
 
-          # 5. Extraction with "Greedy" Grep
-          # We search for your Team ID + the keyword to avoid naming conflicts
+          # 4. Debug: This MUST show 2 valid identities now
           security find-identity -v -p codesigning $KEYCHAIN_PATH
           
-          APP_NAME=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "XG7B22RY35" | grep "Application" | sed -E 's/.*"(.*)"/\1/' | head -n 1)
-          INST_NAME=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "XG7B22RY35" | grep "Installer" | sed -E 's/.*"(.*)"/\1/' | head -n 1)
+          # 5. Extract Names
+          APP_NAME=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Application" | sed -E 's/.*"(.*)"/\1/' | head -n 1)
+          INST_NAME=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Installer" | sed -E 's/.*"(.*)"/\1/' | head -n 1)
 
           if [ -z "$APP_NAME" ]; then echo "APP ID NOT FOUND"; exit 1; fi
           if [ -z "$INST_NAME" ]; then echo "INSTALLER ID NOT FOUND"; exit 1; fi
