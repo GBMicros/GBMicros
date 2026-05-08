@@ -12,7 +12,7 @@
 	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>XG7B22RY35.uk.co.gbmicros.storage</string>
+		<string>XG7B22RY35.uk.co.gbmicros</string>
 	</array>
 	<key>com.apple.security.temporary-exception.mach-register.global-name</key>
 	<array>
@@ -20,8 +20,8 @@
 	</array>
 	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
 	<array>
-		<string>uk.co.gbmicros.storage-spks</string>
-		<string>uk.co.gbmicros.storage-spki</string>
+		<string>uk.co.gbmicros-spks</string>
+		<string>uk.co.gbmicros-spki</string>
 	</array>
 @DEBUG_ENTITLEMENTS@
 </dict>
