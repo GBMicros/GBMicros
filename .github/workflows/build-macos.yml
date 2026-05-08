@@ -25,8 +25,8 @@ jobs:
           security unlock-keychain -p "" $KEYCHAIN_PATH
 
           # Download and install the Apple Developer ID Intermediate Certificate
-          curl -LO https://www.apple.com/certificateauthority/DeveloperIDCA.cer
-          security import DeveloperIDCA.cer -k $KEYCHAIN_PATH -t cert
+          curl -LO https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
+          security import DeveloperIDG2CA.cer -k $KEYCHAIN_PATH -t cert
           
           # 2. Import your P12s
           echo -n "$APP_P12" | base64 --decode > cert_app.p12
