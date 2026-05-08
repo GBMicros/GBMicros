@@ -21,7 +21,12 @@ jobs:
 
       - name: Set Signing Identities
         run: |
-          security find-identity -p codesigning $KEYCHAIN_PATH
+          curl -LO https://www.apple.com/certificateauthority/DeveloperIDCA.cer
+          curl -LO https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
+          security import DeveloperIDCA.cer -k signing_temp.keychain -t cert
+          security import DeveloperIDG2CA.cer -k signing_temp.keychain -t cert
+        
+          security find-identity -p codesigning
           
           # This pulls the names from the keychain automatically
           APP_NAME=$(security find-identity -v -p codesigning | grep "Developer ID Application" | sed -E 's/.*"(.*)".*/\1/' | head -n 1)
