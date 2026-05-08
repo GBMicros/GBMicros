@@ -18,14 +18,14 @@ jobs:
         with:
           p12-file-base64: ${{ secrets.MACOS_APP_P12 }}
           p12-password: ${{ secrets.P12_PASSWORD }}
-          keychain-name: app-signing.keychain
+          keychain: app-signing.keychain
 
       - name: Import Installer Certificate
         uses: apple-actions/import-codesign-certs@v3
         with:
           p12-file-base64: ${{ secrets.MACOS_INSTALLER_P12 }}
           p12-password: ${{ secrets.P12_PASSWORD }}
-          keychain-name: inst-signing.keychain
+          keychain: inst-signing.keychain
 
       - name: Set Signing Identities
         run: |
