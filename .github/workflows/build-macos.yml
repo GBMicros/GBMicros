@@ -24,13 +24,6 @@ jobs:
           security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
           security unlock-keychain -p "" $KEYCHAIN_PATH
 
-          # 1. Download the Developer ID Intermediate (Fixed Link)
-          # This is the G1 Intermediate required for Developer ID Installer certs
-          curl -L "http://www.apple.com/certificateauthority/AppleDeveloperIDCA.cer" -o DeveloperID.cer
-
-          # Import it (No password needed for public certs)
-          security import DeveloperID.cer -k $KEYCHAIN_PATH -t cert
-
           # 2. Import your P12s
           echo -n "$APP_P12" | base64 --decode > cert_app.p12
           security import cert_app.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -T /usr/bin/codesign -T /usr/bin/productbuild
