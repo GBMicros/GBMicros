@@ -13,48 +13,32 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Import and Verify Certificates
-        env:
-          APP_P12: ${{ secrets.MACOS_APP_P12 }}
-          INST_P12: ${{ secrets.MACOS_INSTALLER_P12 }}
-          P12_PWD: ${{ secrets.P12_PASSWORD }}
+      - name: Import Apple Certificates
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.MACOS_APP_P12 }}
+          p12-password: ${{ secrets.P12_PASSWORD }}
+
+      - name: Import Installer Certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.MACOS_INSTALLER_P12 }}
+          p12-password: ${{ secrets.P12_PASSWORD }}
+
+      - name: Set Signing Identities
         run: |
-            KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-            security create-keychain -p "$P12_PWD" $KEYCHAIN_PATH
-            security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-            security unlock-keychain -p "$P12_PWD" $KEYCHAIN_PATH
-            security default-keychain -s $KEYCHAIN_PATH
-
-            # 1. Import Intermediates (Crucial for validity)
-            curl -LO https://www.apple.com/certificateauthority/DeveloperIDCA.cer
-            curl -LO https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
-            security import DeveloperIDCA.cer -k $KEYCHAIN_PATH -t cert
-            security import DeveloperIDG2CA.cer -k $KEYCHAIN_PATH -t cert
-  
-            # 2. Import P12s
-            echo -n "$APP_P12" | base64 --decode > cert_app.p12
-            echo -n "$INST_P12" | base64 --decode > cert_inst.p12
-            security import cert_app.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -A -f pkcs12
-            security import cert_inst.p12 -k $KEYCHAIN_PATH -P "$P12_PWD" -A -f pkcs12
-            
-            security find-identity -p codesigning $KEYCHAIN_PATH
-  
-            # 3. macOS 15 Permissions Fix
-            security set-key-partition-list -S apple-tool:,apple:,codesign:,productbuild: -s -k "$P12_PWD" $KEYCHAIN_PATH
-
-            # 4. Extract Names
-            APP_NAME=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Developer ID Application" | awk -F '"' '{print $2}')
-            INST_NAME=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Developer ID Installer" | awk -F '"' '{print $2}')
-
-            echo "APP_NAME: $APP_NAME"
-            echo "INST_NAME: $INST_NAME"
-
-            if [ -z "$APP_NAME" ]; then echo "APP ID NOT FOUND"; exit 1; fi
-            if [ -z "$INST_NAME" ]; then echo "INSTALLER ID NOT FOUND"; exit 1; fi
-
-            echo "SIGNING_IDENTITY_APP=$APP_NAME" >> $GITHUB_ENV
-            echo "SIGNING_IDENTITY_INST=$INST_NAME" >> $GITHUB_ENV
-            echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
+          # This pulls the names from the keychain automatically
+          APP_NAME=$(security find-identity -v -p codesigning | grep "Developer ID Application" | awk -F '"' '{print $2}' | head -n 1)
+          INST_NAME=$(security find-identity -v -p codesigning | grep "Developer ID Installer" | awk -F '"' '{print $2}' | head -n 1)
+          
+          echo "APP_NAME: $APP_NAME"
+          echo "INST_NAME: $INST_NAME"
+          
+          if [ -z "$APP_NAME" ]; then echo "APP ID NOT FOUND"; exit 1; fi
+          if [ -z "$INST_NAME" ]; then echo "INSTALLER ID NOT FOUND"; exit 1; fi
+          
+          echo "SIGNING_IDENTITY_APP=$APP_NAME" >> $GITHUB_ENV
+          echo "SIGNING_IDENTITY_INST=$INST_NAME" >> $GITHUB_ENV
 
       - name: Install Dependencies
         run: |
