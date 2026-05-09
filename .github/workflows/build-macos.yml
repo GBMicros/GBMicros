@@ -82,6 +82,8 @@ jobs:
     
           echo "Signing: $APP_PATH"
           
+          # Add this temporary debug line before signing
+          find build -name "*.entitlements"          
           
           # 1. Sign the Extensions first (with THEIR specific entitlements)
           codesign --force --options runtime --timestamp \
