@@ -6,7 +6,7 @@
 	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>@DEVELOPMENT_TEAM@.@APPLICATION_REV_DOMAIN@</string>
+		<string>XG7B22RY35.uk.co.gbmicros.storage</string>
 	</array>
 	<key>com.apple.security.network.client</key>
 	<true/>
