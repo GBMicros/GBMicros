@@ -80,11 +80,6 @@ jobs:
           APP_PATH=$(find build/bin -name "*.app" -maxdepth 1 | head -n 1)
           ENTITLEMENTS="build/admin/osx/macosx.entitlements"
 
-          # 1. Sign internal helper binaries and frameworks first
-          # This ensures every sub-component is signed before the main executable
-          find "$APP_PATH/Contents/Frameworks" -type f -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY_APP" {} +
-          find "$APP_PATH/Contents/Helpers" -type f -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY_APP" {} +
-
           find .. -name "FinderSyncExt.entitlements"
           find .. -name "FileProviderExt.entitlements"
           
