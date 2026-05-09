@@ -85,6 +85,9 @@ jobs:
           find "$APP_PATH/Contents/Frameworks" -type f -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY_APP" {} +
           find "$APP_PATH/Contents/Helpers" -type f -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY_APP" {} +
 
+          find .. -name "FinderSyncExt.entitlements"
+          find .. -name "FileProviderExt.entitlements"
+          
           # 1. Sign FinderSync (Path matches the MacOSX folder case)
           codesign --force --options runtime --timestamp \
             --entitlements "build/shell_integration/MacOSX/FinderSyncExt.entitlements" \
