@@ -80,9 +80,6 @@ jobs:
           APP_PATH=$(find build/bin -name "*.app" -maxdepth 1 | head -n 1)
           ENTITLEMENTS="build/admin/osx/macosx.entitlements"
 
-          # 2. Sign the helper binaries
-          find "$APP_PATH/Contents/Helpers" -type f -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY_APP" {} +
-
           # 3. Sign the main binary
           codesign --force --options runtime --timestamp \
             --entitlements "$ENTITLEMENTS" \
