@@ -78,21 +78,7 @@ jobs:
           NOTARY_P8: ${{ secrets.NOTARY_P8 }}
         run: |
           APP_PATH=$(find build/bin -name "*.app" -maxdepth 1 | head -n 1)
-          ENTITLEMENTS="build/admin/osx/macosx.entitlements" # Ensure this is your MANUALLY edited file
-    
-          echo "Signing: $APP_PATH"
-          
-          # Add this temporary debug line before signing
-          find build -name "*.entitlements"          
-          
-          # 1. Sign the Extensions first (with THEIR specific entitlements)
-          codesign --force --options runtime --timestamp \
-            --entitlements "build/shell_integration/macosx/FinderSync.entitlements" \
-            --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/PlugIns/FinderSyncExt.appex"
-
-          codesign --force --options runtime --timestamp \
-            --entitlements "build/fileprovider/FileProviderExt.entitlements" \
-            --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/PlugIns/FileProviderExt.appex"
+          ENTITLEMENTS="build/admin/osx/macosx.entitlements"
 
           # 2. Sign the helper binaries
           find "$APP_PATH/Contents/Helpers" -type f -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY_APP" {} +
