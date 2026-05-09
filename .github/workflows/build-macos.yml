@@ -60,8 +60,7 @@ jobs:
           cmake .. \
             -DAPPLICATION_NAME="GBMicros" \
             -DMACOSX_BUNDLE_BUNDLE_NAME="GBMicros" \
-            -DAPPLICATION_REV_DOMAIN="uk.co.gbmicros" \
-            -DAPPLICATION_ID="storage" \
+            -DAPPLICATION_REV_DOMAIN="uk.co.gbmicros.storage" \
             -DMACOS_TEAM_ID="XG7B22RY35" \
             -DMACOS_APP_GROUP_ID="group.uk.co.gbmicros.storage" \
             -DBUILD_VFS_FILEPROVIDER=ON \
@@ -82,27 +81,29 @@ jobs:
           ENTITLEMENTS="build/admin/osx/macosx.entitlements" # Ensure this is your MANUALLY edited file
     
           echo "Signing: $APP_PATH"
-    
-          # 1. Strip any existing signatures to prevent "nesting" errors
-          echo "Stripping old signatures..."
-          find "$APP_PATH" -type f -exec codesign --remove-signature {} + 2>/dev/null || true
+          
+          
+          # 1. Sign the Extensions first (with THEIR specific entitlements)
+          codesign --force --options runtime --timestamp \
+            --entitlements "build/shell_integration/macosx/FinderSync.entitlements" \
+            --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/PlugIns/FinderSyncExt.appex"
 
-          # 2. Sign internal binary EXPLICITLY with entitlements
-          # Nextcloud needs the main binary to have the entitlements baked in directly
-          echo "Signing internal binary..."
+          codesign --force --options runtime --timestamp \
+            --entitlements "build/fileprovider/FileProviderExt.entitlements" \
+            --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/PlugIns/FileProviderExt.appex"
+
+          # 2. Sign the helper binaries
+          find "$APP_PATH/Contents/Helpers" -type f -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY_APP" {} +
+
+          # 3. Sign the main binary
           codesign --force --options runtime --timestamp \
             --entitlements "$ENTITLEMENTS" \
             --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/MacOS/gbmicros"
 
-          # 3. Sign the whole bundle (Deep)
-          echo "Signing main bundle..."
-          codesign --force --options runtime --timestamp --deep \
+          # 4. Finally, sign the App Bundle (without --deep)
+          codesign --force --options runtime --timestamp \
             --entitlements "$ENTITLEMENTS" \
             --sign "$SIGNING_IDENTITY_APP" "$APP_PATH"
-
-          # 4. Verification (Check if the signature is actually valid locally)
-          codesign --verify --verbose --deep "$APP_PATH"
-          codesign -d --entitlements :- "$APP_PATH" # This prints the entitlements to the log for you to see
 
           # 5. Package and Notarize
           productbuild --component "$APP_PATH" /Applications \

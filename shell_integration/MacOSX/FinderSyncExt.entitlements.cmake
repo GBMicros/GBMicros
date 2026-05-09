@@ -6,11 +6,11 @@
 	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>XG7B22RY35.uk.co.gbmicros.storage</string>
+		<string>@DEVELOPMENT_TEAM@.@APPLICATION_REV_DOMAIN@</string>
 	</array>
 	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
 	<array>
-		<string>uk.co.gbmicros.storage.FinderSyncService</string>
+		<string>@APPLICATION_REV_DOMAIN@.FinderSyncService</string>
 	</array>
 @DEBUG_ENTITLEMENTS@
 </dict>
