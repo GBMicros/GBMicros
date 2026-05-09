@@ -80,18 +80,29 @@ jobs:
           APP_PATH=$(find build/bin -name "*.app" -maxdepth 1 | head -n 1)
           ENTITLEMENTS="build/admin/osx/macosx.entitlements"
 
-          find .. -name "FinderSyncExt.entitlements"
-          find .. -name "FileProviderExt.entitlements"
+          FINDER_SYNC_PATH=$(find .. -name "FinderSyncExt.appex" | head -n 1)
+          # Check if the variable is empty before proceeding
+          if [ -z "$FINDER_SYNC_PATH" ]; then
+            echo "Error: FinderSyncExt.appex not found!"
+            exit 1
+          fi
+          
+          FINDER_PROV_PATH=$(find .. -name "FileProviderExt.appex" | head -n 1)
+          # Check if the variable is empty before proceeding
+          if [ -z "$FINDER_PROV_PATH" ]; then
+            echo "Error: FileProviderExt.appex not found!"
+            exit 1
+          fi
           
           # 1. Sign FinderSync (Path matches the MacOSX folder case)
           codesign --force --options runtime --timestamp \
-            --entitlements "shell_integration/MacOSX/FinderSyncExt.entitlements" \
-            --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/PlugIns/FinderSyncExt.appex"
+            --entitlements "../GBMicros/shell_integration/MacOSX/FinderSyncExt.entitlements" \
+            --sign "$SIGNING_IDENTITY_APP" "$FINDER_SYNC_PATH"
 
           # 2. Sign File Provider
           codesign --force --options runtime --timestamp \
-            --entitlements "shell_integration/MacOSX/FileProviderExt.entitlements" \
-            --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/PlugIns/FileProviderExt.appex"
+            --entitlements "../GBMicros/shell_integration/MacOSX/FileProviderExt.entitlements" \
+            --sign "$SIGNING_IDENTITY_APP" "$FINDER_PROV_PATH"
 
           # 3. Sign the Main Executable
           codesign --force --options runtime --timestamp \
