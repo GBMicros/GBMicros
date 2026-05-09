@@ -1,0 +1,18 @@
+name: Check Apple Notarization Log
+on:
+  workflow_dispatch:
+    inputs:
+      notary_id:
+        description: 'The ID from your failed run'
+        required: true
+
+jobs:
+  get-log:
+    runs-on: macos-latest
+    steps:
+      - name: Fetch Log
+        run: |
+          xcrun notarytool log ${{ github.event.inputs.notary_id }} \
+            --apple-id "${{ secrets.APPLE_ID }}" \
+            --team-id "${{ secrets.TEAM_ID }}" \
+            --password "${{ secrets.APPLE_PASSWORD }}"
