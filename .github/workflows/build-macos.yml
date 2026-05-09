@@ -90,12 +90,12 @@ jobs:
           
           # 1. Sign FinderSync (Path matches the MacOSX folder case)
           codesign --force --options runtime --timestamp \
-            --entitlements "build/shell_integration/MacOSX/FinderSyncExt.entitlements" \
+            --entitlements "shell_integration/MacOSX/FinderSyncExt.entitlements" \
             --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/PlugIns/FinderSyncExt.appex"
 
           # 2. Sign File Provider
           codesign --force --options runtime --timestamp \
-            --entitlements "build/shell_integration/MacOSX/FileProviderExt.entitlements" \
+            --entitlements "shell_integration/MacOSX/FileProviderExt.entitlements" \
             --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/PlugIns/FileProviderExt.appex"
 
           # 3. Sign the Main Executable
