@@ -85,25 +85,24 @@ jobs:
           find "$APP_PATH/Contents/Frameworks" -type f -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY_APP" {} +
           find "$APP_PATH/Contents/Helpers" -type f -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY_APP" {} +
 
-          # 2. Sign the Extensions (PlugIns) with their specific entitlements
+          # 1. Sign FinderSync (Path matches the MacOSX folder case)
           codesign --force --options runtime --timestamp \
-            --entitlements "build/shell_integration/MacOSX/NextcloudIntegration/FinderSyncExt.entitlements" \
+            --entitlements "build/shell_integration/MacOSX/FinderSyncExt.entitlements" \
             --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/PlugIns/FinderSyncExt.appex"
 
+          # 2. Sign File Provider
           codesign --force --options runtime --timestamp \
-            --entitlements "build/fileprovider/FileProviderExt.entitlements" \
+            --entitlements "build/shell_integration/MacOSX/FileProviderExt.entitlements" \
             --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/PlugIns/FileProviderExt.appex"
 
           # 3. Sign the Main Executable
-          # This is the specific file Apple complained about in your log
           codesign --force --options runtime --timestamp \
-            --entitlements "$ENTITLEMENTS" \
+            --entitlements "build/admin/osx/macosx.entitlements" \
             --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/MacOS/gbmicros"
 
-          # 4. Sign the Bundle (The App itself)
-          # IMPORTANT: No --deep here! We already signed the internals manually.
+          # 4. Sign the App Bundle
           codesign --force --options runtime --timestamp \
-            --entitlements "$ENTITLEMENTS" \
+            --entitlements "build/admin/osx/macosx.entitlements" \
             --sign "$SIGNING_IDENTITY_APP" "$APP_PATH"
 
           # 5. Package and Notarize
