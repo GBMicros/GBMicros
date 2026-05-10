@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-macos:
-    runs-on: macos-15-intel
+    runs-on: macos-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
@@ -72,10 +72,12 @@ jobs:
           # 1. Build and Install to the deploy_root
           # This avoids the permission errors and gathers all app components in one place
           xcodebuild -project client.xcodeproj \
-            -scheme install \
             -configuration Release \
-            -arch x86_64 \
+            -alltargets \
+            -arch Universal \
             build
+            
+          cmake --install . --config Release
 
       - name: Bundle and Code Sign
         env:
