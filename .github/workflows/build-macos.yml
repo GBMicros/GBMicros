@@ -71,13 +71,8 @@ jobs:
             -DCMAKE_XCODE_ATTRIBUTE_ARCHS="x86_64 arm64" \
             -DCMAKE_XCODE_ATTRIBUTE_VALID_ARCHS="x86_64 arm64" \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)"
-            
-          XCODE_PROJ_PATH=$(find . -name "*.xcodeproj")
           
-          echo $XCODE_PROJ_PATH
-          exit 1
-          
-          xcodebuild -project $XCODE_PROJ_PATH \
+          xcodebuild -project client.xcodeproj \
            -scheme gbmicros \
            -configuration Release \
            -arch x86_64 -arch arm64 \
