@@ -58,6 +58,7 @@ jobs:
         run: |
           mkdir build && cd build
           cmake .. \
+            -G Xcode \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
             -DAPPLICATION_NAME="gbmicros" \
@@ -70,7 +71,11 @@ jobs:
             -DCMAKE_XCODE_ATTRIBUTE_ARCHS="x86_64 arm64" \
             -DCMAKE_XCODE_ATTRIBUTE_VALID_ARCHS="x86_64 arm64" \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)"
-          make -j$(sysctl -n hw.ncpu)
+          xcodebuild -project GBMicros.xcodeproj \
+           -scheme gbmicros \
+           -configuration Release \
+           -arch x86_64 -arch arm64 \
+           build
 
       - name: Code Sign and Notarize
         env:
@@ -95,6 +100,9 @@ jobs:
             codesign --force --options runtime --timestamp \
               --entitlements "shell_integration/MacOSX/FinderSyncExt.entitlements" \
               --sign "$SIGNING_IDENTITY_APP" "$FINDER_SYNC_PATH"
+          else
+            echo "❌ Error: FileProviderExt.appex not found";
+            exit 1;
           fi
 
           # 3. Sign FileProvider if found
@@ -104,7 +112,8 @@ jobs:
               --entitlements "shell_integration/MacOSX/FileProviderExt.entitlements" \
               --sign "$SIGNING_IDENTITY_APP" "$FILE_PROV_PATH"
           else
-            echo "⚠️ Warning: FileProviderExt.appex not found, skipping..."
+            echo "❌ Error: FileProviderExt.appex not found";
+            exit 1;
           fi
 
           # 4. Sign the Main Binary
