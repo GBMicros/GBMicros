@@ -56,21 +56,17 @@ jobs:
 
       - name: Compile Nextcloud Client
         run: |
-          rm -rf build && mkdir build && cd build
+          mkdir build && cd build
           cmake .. \
-            -DAPPLICATION_NAME="GBMicros" \
-            -DMACOSX_BUNDLE_BUNDLE_NAME="GBMicros" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DAPPLICATION_NAME="gbmicros" \
             -DAPPLICATION_REV_DOMAIN="uk.co.gbmicros.storage" \
             -DMACOS_TEAM_ID="XG7B22RY35" \
-            -DMACOS_APP_GROUP_ID="group.uk.co.gbmicros.storage" \
-            -DBUILD_VFS_FILEPROVIDER=ON \
-            -DKDSingleApplication-qt6_DIR="$(brew --prefix kdsingleapplication-qt6)/lib/cmake/KDSingleApplication-qt6" \
-            -DQt6_DIR="$(brew --prefix qt@6)/lib/cmake/Qt6" \
-            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
-            -DBUILD_TESTING=OFF \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
             -DBUILD_FILE_PROVIDER_MODULE=ON \
-            -DCMAKE_BUILD_TYPE=Release
+            -DBUILD_TESTING=OFF \
+            -DQt6_DIR="$(brew --prefix qt@6)/lib/cmake/Qt6" \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)"
           make -j$(sysctl -n hw.ncpu)
 
       - name: Code Sign and Notarize
