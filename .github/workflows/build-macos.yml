@@ -80,17 +80,20 @@ jobs:
           APP_PATH=$(find build/bin -name "*.app" -maxdepth 1 | head -n 1)
           ENTITLEMENTS="build/admin/osx/macosx.entitlements"
 
-          FINDER_SYNC_PATH=$(find .. -name "FinderSyncExt.appex" | head -n 1)
-          # Check if the variable is empty before proceeding
-          if [ -z "$FINDER_SYNC_PATH" ]; then
-            echo "Error: FinderSyncExt.appex not found!"
-            exit 1
-          fi
-          
-          FINDER_PROV_PATH=$(find .. -name "FileProviderExt.appex" | head -n 1)
-          # Check if the variable is empty before proceeding
-          if [ -z "$FINDER_PROV_PATH" ]; then
-            echo "Error: FileProviderExt.appex not found!"
+          # Search from the workspace root to find where these files actually are
+          echo "Searching for extensions..."
+          find . -name "*.appex"
+
+          # Set paths based on what we find (using . to search from root)
+          FINDER_SYNC_PATH=$(find . -name "FinderSyncExt.appex" | head -n 1)
+          FILE_PROV_PATH=$(find . -name "FileProviderExt.appex" | head -n 1)
+
+          echo "FinderSync Path: $FINDER_SYNC_PATH"
+          echo "FileProvider Path: $FILE_PROV_PATH"
+
+          if [ -z "$FINDER_SYNC_PATH" ] || [ -z "$FILE_PROV_PATH" ]; then
+            echo "❌ EXTENSIONS NOT FOUND. Listing build/bin content:"
+            ls -R build/bin
             exit 1
           fi
           
