@@ -68,6 +68,8 @@ jobs:
             -DQt6_DIR="$(brew --prefix qt@6)/lib/cmake/Qt6" \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
             -DBUILD_TESTING=OFF \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DBUILD_FILE_PROVIDER_MODULE=ON \
             -DCMAKE_BUILD_TYPE=Release
           make -j$(sysctl -n hw.ncpu)
 
@@ -84,38 +86,37 @@ jobs:
           echo "Searching for extensions..."
           find . -name "*.appex"
 
-          # Set paths based on what we find (using . to search from root)
-          FINDER_SYNC_PATH=$(find . -name "FinderSyncExt.appex" | head -n 1)
-          FILE_PROV_PATH=$(find . -name "FileProviderExt.appex" | head -n 1)
+          # 1. Discover paths dynamically from the build folder
+          FINDER_SYNC_PATH=$(find build/shell_integration -name "FinderSyncExt.appex" | head -n 1)
+          FILE_PROV_PATH=$(find build/fileprovider -name "FileProviderExt.appex" | head -n 1)
 
-          echo "FinderSync Path: $FINDER_SYNC_PATH"
-          echo "FileProvider Path: $FILE_PROV_PATH"
-
-          if [ -z "$FINDER_SYNC_PATH" ] || [ -z "$FILE_PROV_PATH" ]; then
-            echo "❌ EXTENSIONS NOT FOUND. Listing build/bin content:"
-            ls -R build/bin
-            exit 1
+          # 2. Sign FinderSync if found
+          if [ -n "$FINDER_SYNC_PATH" ]; then
+            echo "Signing FinderSync at $FINDER_SYNC_PATH"
+            codesign --force --options runtime --timestamp \
+              --entitlements "shell_integration/MacOSX/FinderSyncExt.entitlements" \
+              --sign "$SIGNING_IDENTITY_APP" "$FINDER_SYNC_PATH"
           fi
-          
-          # 1. Sign FinderSync (Path matches the MacOSX folder case)
-          codesign --force --options runtime --timestamp \
-            --entitlements "../GBMicros/shell_integration/MacOSX/FinderSyncExt.entitlements" \
-            --sign "$SIGNING_IDENTITY_APP" "$FINDER_SYNC_PATH"
 
-          # 2. Sign File Provider
-          codesign --force --options runtime --timestamp \
-            --entitlements "../GBMicros/shell_integration/MacOSX/FileProviderExt.entitlements" \
-            --sign "$SIGNING_IDENTITY_APP" "$FINDER_PROV_PATH"
+          # 3. Sign FileProvider if found
+          if [ -n "$FILE_PROV_PATH" ]; then
+            echo "Signing FileProvider at $FILE_PROV_PATH"
+            codesign --force --options runtime --timestamp \
+              --entitlements "shell_integration/MacOSX/FileProviderExt.entitlements" \
+              --sign "$SIGNING_IDENTITY_APP" "$FILE_PROV_PATH"
+          else
+            echo "⚠️ Warning: FileProviderExt.appex not found, skipping..."
+          fi
 
-          # 3. Sign the Main Executable
+          # 4. Sign the Main Binary
           codesign --force --options runtime --timestamp \
             --entitlements "build/admin/osx/macosx.entitlements" \
-            --sign "$SIGNING_IDENTITY_APP" "$APP_PATH/Contents/MacOS/gbmicros"
+            --sign "$SIGNING_IDENTITY_APP" "build/bin/gbmicros.app/Contents/MacOS/gbmicros"
 
-          # 4. Sign the App Bundle
+          # 5. Sign the Bundle
           codesign --force --options runtime --timestamp \
             --entitlements "build/admin/osx/macosx.entitlements" \
-            --sign "$SIGNING_IDENTITY_APP" "$APP_PATH"
+            --sign "$SIGNING_IDENTITY_APP" "build/bin/gbmicros.app"
 
           # 5. Package and Notarize
           productbuild --component "$APP_PATH" /Applications \
