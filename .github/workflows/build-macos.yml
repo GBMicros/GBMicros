@@ -66,6 +66,9 @@ jobs:
             -DBUILD_FILE_PROVIDER_MODULE=ON \
             -DBUILD_TESTING=OFF \
             -DQt6_DIR="$(brew --prefix qt@6)/lib/cmake/Qt6" \
+            -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
+            -DCMAKE_XCODE_ATTRIBUTE_ARCHS="x86_64 arm64" \
+            -DCMAKE_XCODE_ATTRIBUTE_VALID_ARCHS="x86_64 arm64" \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)"
           make -j$(sysctl -n hw.ncpu)
 
