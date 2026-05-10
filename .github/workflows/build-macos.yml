@@ -67,14 +67,14 @@ jobs:
             -DBUILD_FILE_PROVIDER_MODULE=ON \
             -DBUILD_TESTING=OFF \
             -DQt6_DIR="$(brew --prefix qt@6)/lib/cmake/Qt6" \
-            -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
+            -DCMAKE_OSX_ARCHITECTURES="x86_64" \
             -DCMAKE_XCODE_ATTRIBUTE_ARCHS="x86_64 arm64" \
             -DCMAKE_XCODE_ATTRIBUTE_VALID_ARCHS="x86_64 arm64" \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)"
           
           xcodebuild -project client.xcodeproj \
            -configuration Release \
-           -arch x86_64 -arch arm64 \
+           -arch x86_64 \
            -alltargets \
            CODE_SIGN_IDENTITY="Developer ID Application: GARY WAYNE BENTLEY (XG7B22RY35)" \
            DEVELOPMENT_TEAM="XG7B22RY35" \
