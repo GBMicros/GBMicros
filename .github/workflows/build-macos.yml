@@ -66,84 +66,76 @@ jobs:
             -DMACOS_TEAM_ID="XG7B22RY35" \
             -DBUILD_FILE_PROVIDER_MODULE=ON \
             -DBUILD_TESTING=OFF \
-            -DQt6_DIR="$(brew --prefix qt@6)/lib/cmake/Qt6" \
-            -DCMAKE_OSX_ARCHITECTURES="x86_64" \
-            -DCMAKE_XCODE_ATTRIBUTE_ARCHS="x86_64 arm64" \
-            -DCMAKE_XCODE_ATTRIBUTE_VALID_ARCHS="x86_64 arm64" \
-            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)"
-          
-          xcodebuild -project client.xcodeproj \
-           -configuration Release \
-           -arch x86_64 \
-           -alltargets \
-           -DSKIP_POST_INSTALL_LOGIC=ON \
-           CODE_SIGN_IDENTITY="Developer ID Application: GARY WAYNE BENTLEY (XG7B22RY35)" \
-           DEVELOPMENT_TEAM="XG7B22RY35" \
-           CODE_SIGN_STYLE="Manual" \
-           PRODUCT_BUNDLE_IDENTIFIER="uk.co.gbmicros.storage" \
-           CODE_SIGNING_ALLOWED=NO \
-           CODE_SIGNING_REQUIRED=NO \
-           build
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
+            -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/deploy_root
 
-      - name: Code Sign and Notarize
+          # 1. Build and Install to the deploy_root
+          # This avoids the permission errors and gathers all app components in one place
+          xcodebuild -project client.xcodeproj \
+            -scheme install \
+            -configuration Release \
+            -arch x86_64 \
+            build
+
+      - name: Bundle and Code Sign
+        env:
+          # Make sure these are defined in your 'env' or passed from secrets
+          SIGNING_IDENTITY_APP: "Developer ID Application: GARY WAYNE BENTLEY (XG7B22RY35)"
+          SIGNING_IDENTITY_INST: "Developer ID Installer: GARY WAYNE BENTLEY (XG7B22RY35)"
+        run: |
+          APP_PATH="$GITHUB_WORKSPACE/deploy_root/gbmicros.app"
+          
+          # 2. Use macdeployqt to inject Qt frameworks and sign them
+          # -codesign handles the internal Qt libs so you don't have to sign them manually
+          # -hardened-runtime is required for Notarization
+          $(brew --prefix qt@6)/bin/macdeployqt "$APP_PATH" \
+            -codesign="$SIGNING_IDENTITY_APP" \
+            -hardened-runtime \
+            -timestamp
+
+          # 3. Sign the Extensions (FinderSync and FileProvider)
+          # These must be signed BEFORE the main app bundle
+          find "$APP_PATH/Contents/PlugIns" -name "*.appex" | while read extension; do
+            echo "Signing extension: $extension"
+            codesign --force --options runtime --timestamp \
+              --sign "$SIGNING_IDENTITY_APP" \
+              --entitlements "shell_integration/MacOSX/FinderSyncExt.entitlements" \
+              "$extension"
+          done
+
+          # 4. Final signature on the main App Bundle
+          codesign --force --options runtime --timestamp \
+            --sign "$SIGNING_IDENTITY_APP" \
+            --entitlements "admin/osx/macosx.entitlements" \
+            "$APP_PATH"
+
+      - name: Package and Notarize
         env:
           KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
           ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
           NOTARY_P8: ${{ secrets.NOTARY_P8 }}
+          SIGNING_IDENTITY_INST: "Developer ID Installer: GARY WAYNE BENTLEY (XG7B22RY35)"
         run: |
-          APP_PATH=$(find build/bin -name "*.app" -maxdepth 1 | head -n 1)
-          ENTITLEMENTS="build/admin/osx/macosx.entitlements"
-
-          # Search from the workspace root to find where these files actually are
-          echo "Searching for extensions..."
-          find . -name "*.appex"
-
-          # 1. Discover paths dynamically from the build folder
-          FINDER_SYNC_PATH=$(find build/shell_integration -name "FinderSyncExt.appex" | head -n 1)
-          FILE_PROV_PATH=$(find build/fileprovider -name "FileProviderExt.appex" | head -n 1)
-
-          # 2. Sign FinderSync if found
-          if [ -n "$FINDER_SYNC_PATH" ]; then
-            echo "Signing FinderSync at $FINDER_SYNC_PATH"
-            codesign --force --options runtime --timestamp \
-              --entitlements "shell_integration/MacOSX/FinderSyncExt.entitlements" \
-              --sign "$SIGNING_IDENTITY_APP" "$FINDER_SYNC_PATH"
-          else
-            echo "❌ Error: FileProviderExt.appex not found";
-            exit 1;
-          fi
-
-          # 3. Sign FileProvider if found
-          if [ -n "$FILE_PROV_PATH" ]; then
-            echo "Signing FileProvider at $FILE_PROV_PATH"
-            codesign --force --options runtime --timestamp \
-              --entitlements "shell_integration/MacOSX/FileProviderExt.entitlements" \
-              --sign "$SIGNING_IDENTITY_APP" "$FILE_PROV_PATH"
-          else
-            echo "❌ Error: FileProviderExt.appex not found";
-            exit 1;
-          fi
-
-          # 4. Sign the Main Binary
-          codesign --force --options runtime --timestamp \
-            --entitlements "build/admin/osx/macosx.entitlements" \
-            --sign "$SIGNING_IDENTITY_APP" "build/bin/gbmicros.app/Contents/MacOS/gbmicros"
-
-          # 5. Sign the Bundle
-          codesign --force --options runtime --timestamp \
-            --entitlements "build/admin/osx/macosx.entitlements" \
-            --sign "$SIGNING_IDENTITY_APP" "build/bin/gbmicros.app"
-
-          # 5. Package and Notarize
+          APP_PATH="$GITHUB_WORKSPACE/deploy_root/gbmicros.app"
+          
+          # 5. Build the PKG installer
           productbuild --component "$APP_PATH" /Applications \
-            --keychain signing_temp.keychain \
-            --sign "$SIGNING_IDENTITY_INST" Nextcloud-Custom.pkg
+            --sign "$SIGNING_IDENTITY_INST" \
+            gbmicros-installer.pkg
 
+          # 6. Submit for Notarization
           echo "$NOTARY_P8" > notary.p8
-          xcrun notarytool submit Nextcloud-Custom.pkg --key-id "$KEY_ID" --issuer "$ISSUER_ID" --key notary.p8 --wait
+          xcrun notarytool submit gbmicros-installer.pkg \
+            --key-id "$KEY_ID" \
+            --issuer "$ISSUER_ID" \
+            --key notary.p8 \
+            --wait
+
+          # 7. Staple the notarization to the PKG
+          xcrun stapler staple gbmicros-installer.pkg
 
       - name: Upload Finished Client
         uses: actions/upload-artifact@v4
         with:
-          name: Nextcloud-macOS-Signed
-          path: Nextcloud-Custom.pkg
+          name: gbmicros-macOS-Signed-Installer
+          path: gbmicros-installer.pkg
