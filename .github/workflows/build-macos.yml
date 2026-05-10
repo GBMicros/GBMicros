@@ -74,6 +74,9 @@ jobs:
             
           XCODE_PROJ_PATH=$(find . -name "*.xcodeproj")
           
+          echo $XCODE_PROJ_PATH
+          exit 1
+          
           xcodebuild -project $XCODE_PROJ_PATH \
            -scheme gbmicros \
            -configuration Release \
