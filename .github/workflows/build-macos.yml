@@ -76,6 +76,7 @@ jobs:
            -configuration Release \
            -arch x86_64 \
            -alltargets \
+           -DSKIP_POST_INSTALL_LOGIC=ON \
            CODE_SIGN_IDENTITY="Developer ID Application: GARY WAYNE BENTLEY (XG7B22RY35)" \
            DEVELOPMENT_TEAM="XG7B22RY35" \
            CODE_SIGN_STYLE="Manual" \
