@@ -73,7 +73,7 @@ jobs:
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)"
           
           xcodebuild -project client.xcodeproj \
-           -scheme gbmicros \
+           -scheme nextcloud \
            -configuration Release \
            -arch x86_64 -arch arm64 \
            build
