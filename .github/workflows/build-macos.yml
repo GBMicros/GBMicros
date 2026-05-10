@@ -76,6 +76,8 @@ jobs:
            -scheme nextcloud \
            -configuration Release \
            -arch x86_64 -arch arm64 \
+           PRODUCT_BUNDLE_IDENTIFIER="uk.co.gbmicros.storage" \
+           DEVELOPMENT_TEAM="XG7B22RY35" \
            build
 
       - name: Code Sign and Notarize
