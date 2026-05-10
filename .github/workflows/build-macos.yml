@@ -67,14 +67,16 @@ jobs:
             -DBUILD_FILE_PROVIDER_MODULE=ON \
             -DBUILD_TESTING=OFF \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
-            -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/deploy_root
+            -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/deploy_root \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
 
           # 1. Build and Install to the deploy_root
           # This avoids the permission errors and gathers all app components in one place
           xcodebuild -project client.xcodeproj \
             -configuration Release \
             -alltargets \
-            -arch Universal \
+            ARCHS="arm64 x86_64" \
+            ONLY_ACTIVE_ARCH=NO \            
             build
             
           cmake --install . --config Release
@@ -82,8 +84,8 @@ jobs:
       - name: Bundle and Code Sign
         env:
           # Make sure these are defined in your 'env' or passed from secrets
-          SIGNING_IDENTITY_APP: "Developer ID Application: GARY WAYNE BENTLEY (XG7B22RY35)"
-          SIGNING_IDENTITY_INST: "Developer ID Installer: GARY WAYNE BENTLEY (XG7B22RY35)"
+          SIGNING_IDENTITY_APP: ${{ env.SIGNING_IDENTITY_APP }}
+          SIGNING_IDENTITY_INST: ${{ env.SIGNING_IDENTITY_INST }}
         run: |
           APP_PATH="$GITHUB_WORKSPACE/deploy_root/gbmicros.app"
           
