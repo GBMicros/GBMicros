@@ -69,6 +69,8 @@ jobs:
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
             -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/deploy_root \
             -DCMAKE_OSX_ARCHITECTURES="arm64"
+            -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$GITHUB_WORKSPACE/build/bin \
+            -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$GITHUB_WORKSPACE/build/bin \
 
           xcodebuild -project client.xcodeproj \
             -scheme nextcloud \
@@ -81,6 +83,8 @@ jobs:
           #mkdir -p $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n
           
           #cp -R bin/Release/gbmicros.app $GITHUB_WORKSPACE/deploy_root/Applications/
+          
+          find . -name "gbmicrosync_vfs_suffix.dylib"
           
           cmake --install . --config Release --prefix "$GITHUB_WORKSPACE/deploy_root"
           
