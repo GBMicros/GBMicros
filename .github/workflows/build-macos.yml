@@ -78,41 +78,29 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build
 
-          # 1. Create the destination
-          mkdir -p $GITHUB_WORKSPACE/deploy_root/Applications
+          #mkdir -p $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n
           
-          # 2. Manually copy the compiled App Bundle (bypassing the broken script)
-          cp -R bin/Release/gbmicros.app $GITHUB_WORKSPACE/deploy_root/Applications/
+          #cp -R bin/Release/gbmicros.app $GITHUB_WORKSPACE/deploy_root/Applications/
           
-          # 3. Force-run the install for EVERYTHING ELSE (Translations, etc.)
-          # We use '|| true' because we know the macOS part will still error at the end, 
-          # but the translations will have finished installing first.
-          cmake --install . --config Release --prefix "$GITHUB_WORKSPACE/deploy_root" || true
-
-          echo $(find .. -name "*.qm")
+          cmake --install . --config Release --prefix "$GITHUB_WORKSPACE/deploy_root"
           
-          # 4. Manually move the translations into the App Bundle where they belong
-          mkdir -p $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n
-          cp $GITHUB_WORKSPACE/deploy_root/share/gbmicros/i18n/*.qm $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n/ || echo "No translations found"
+          #mkdir -p $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n
+          #cp $GITHUB_WORKSPACE/deploy_root/share/gbmicros/i18n/*.qm $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n/ || echo "No translations found"
 
       - name: Bundle and Code Sign
         env:
-          # Make sure these are defined in your 'env' or passed from secrets
           SIGNING_IDENTITY_APP: ${{ env.SIGNING_IDENTITY_APP }}
           SIGNING_IDENTITY_INST: ${{ env.SIGNING_IDENTITY_INST }}
         run: |
           APP_PATH="$GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app"
           
-          # 2. Use macdeployqt to inject Qt frameworks and sign them
-          # -codesign handles the internal Qt libs so you don't have to sign them manually
-          # -hardened-runtime is required for Notarization
           $(brew --prefix qt@6)/bin/macdeployqt "$APP_PATH" \
             -codesign="$SIGNING_IDENTITY_APP" \
             -hardened-runtime \
             -timestamp
-
-          # 3. Sign the Extensions (FinderSync and FileProvider)
-          # These must be signed BEFORE the main app bundle
+          
+          echo $(find "$APP_PATH/Contents/PlugIns" -name "*.appex")
+          
           find "$APP_PATH/Contents/PlugIns" -name "*.appex" | while read extension; do
             echo "Signing extension: $extension"
             codesign --force --options runtime --timestamp \
@@ -123,10 +111,9 @@ jobs:
           
           echo $(find .. -name "*.entitlements")
           
-          # 4. Final signature on the main App Bundle
           codesign --force --options runtime --timestamp \
             --sign "$SIGNING_IDENTITY_APP" \
-            --entitlements "admin/osx/macosx.entitlements" \
+            --entitlements "./admin/osx/macosx.entitlements" \
             "$APP_PATH"
 
       - name: Package and Notarize
