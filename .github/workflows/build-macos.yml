@@ -68,14 +68,14 @@ jobs:
             -DBUILD_TESTING=OFF \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
             -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/deploy_root \
-            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+            -DCMAKE_OSX_ARCHITECTURES="arm64"
 
           # 1. Build and Install to the deploy_root
           # This avoids the permission errors and gathers all app components in one place
           xcodebuild -project client.xcodeproj \
             -configuration Release \
             -alltargets \
-            ARCHS="arm64 x86_64" \
+            ARCHS="arm64" \
             ONLY_ACTIVE_ARCH=NO \
             build
             
