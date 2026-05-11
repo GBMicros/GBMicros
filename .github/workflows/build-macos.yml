@@ -85,7 +85,7 @@ jobs:
           
           #cp -R bin/Release/gbmicros.app $GITHUB_WORKSPACE/deploy_root/Applications/
           
-          find .. -name "gbmicrossync_vfs_suffix.dylib"
+          find .. -name "*vfs_suffix.dylib" -ls
           
           cmake --install . --config Release --prefix "$GITHUB_WORKSPACE/deploy_root"
           
