@@ -89,6 +89,8 @@ jobs:
           # but the translations will have finished installing first.
           cmake --install . --config Release --prefix "$GITHUB_WORKSPACE/deploy_root" || true
 
+          echo $(find .. -name "*.qm")
+          
           # 4. Manually move the translations into the App Bundle where they belong
           mkdir -p $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n
           cp $GITHUB_WORKSPACE/deploy_root/share/gbmicros/i18n/*.qm $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n/ || echo "No translations found"
@@ -118,7 +120,9 @@ jobs:
               --entitlements "shell_integration/MacOSX/FinderSyncExt.entitlements" \
               "$extension"
           done
-
+          
+          echo $(find .. -name "*.entitlements")
+          
           # 4. Final signature on the main App Bundle
           codesign --force --options runtime --timestamp \
             --sign "$SIGNING_IDENTITY_APP" \
