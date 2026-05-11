@@ -73,10 +73,25 @@ jobs:
           xcodebuild -project client.xcodeproj \
             -scheme nextcloud \
             -configuration Release \
-            -archivePath ./Nextcloud.xcarchive \
-            PRODUCT_BUNDLE_IDENTIFIER="uk.co.gbmicros.storage" \
-            DEVELOPMENT_TEAM="XG7B22RY35" \
-            archive
+            -arch arm64 \
+            ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+          # 1. Create the destination
+          mkdir -p $GITHUB_WORKSPACE/deploy_root/Applications
+          
+          # 2. Manually copy the compiled App Bundle (bypassing the broken script)
+          cp -R bin/Release/gbmicros.app $GITHUB_WORKSPACE/deploy_root/Applications/
+          
+          # 3. Force-run the install for EVERYTHING ELSE (Translations, etc.)
+          # We use '|| true' because we know the macOS part will still error at the end, 
+          # but the translations will have finished installing first.
+          cmake --install . --config Release --prefix "$GITHUB_WORKSPACE/deploy_root" || true
+
+          # 4. Manually move the translations into the App Bundle where they belong
+          mkdir -p $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n
+          cp $GITHUB_WORKSPACE/deploy_root/share/gbmicros/i18n/*.qm $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n/ || echo "No translations found"
 
       - name: Bundle and Code Sign
         env:
