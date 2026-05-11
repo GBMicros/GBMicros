@@ -81,7 +81,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             build
             
-          cmake --install . --config Release --prefix $GITHUB_WORKSPACE/deploy_root
+          DESTDIR=$GITHUB_WORKSPACE/deploy_root cmake --install . --config Release
 
       - name: Bundle and Code Sign
         env:
