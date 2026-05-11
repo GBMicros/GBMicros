@@ -77,8 +77,6 @@ jobs:
             -scheme nextcloud \
             -configuration Release \
             -arch arm64 \
-            ONLY_ACTIVE_ARCH=YES \
-            CODE_SIGNING_ALLOWED=NO \
             build
 
           #mkdir -p $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n
