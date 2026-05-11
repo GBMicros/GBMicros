@@ -69,9 +69,9 @@ jobs:
             -DBUILD_TESTING=OFF \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix extra-cmake-modules)" \
             -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/deploy_root \
-            -DCMAKE_OSX_ARCHITECTURES="arm64"
+            -DCMAKE_OSX_ARCHITECTURES="arm64" \
             -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$GITHUB_WORKSPACE/build/bin \
-            -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$GITHUB_WORKSPACE/build/bin \
+            -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$GITHUB_WORKSPACE/build/bin
 
           xcodebuild -project client.xcodeproj \
             -scheme nextcloud \
