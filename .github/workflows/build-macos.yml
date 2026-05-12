@@ -77,6 +77,8 @@ jobs:
             -scheme nextcloud \
             -configuration Release \
             -arch arm64 \
+            ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_ALLOWED=NO \
             build
 
           #mkdir -p $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n
@@ -85,7 +87,7 @@ jobs:
           
           find .. -name "*vfs_suffix.dylib" -ls
           
-          cmake --install . --config Release --prefix "$GITHUB_WORKSPACE/deploy_root"
+          cmake --install . --config Release
           
           #mkdir -p $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n
           #cp $GITHUB_WORKSPACE/deploy_root/share/gbmicros/i18n/*.qm $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n/ || echo "No translations found"
