@@ -74,7 +74,7 @@ jobs:
             -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$GITHUB_WORKSPACE/build/bin
 
           xcodebuild -project client.xcodeproj \
-            -scheme nextcloud \
+            -alltargets \
             -configuration Release \
             -arch arm64 \
             ONLY_ACTIVE_ARCH=YES \
