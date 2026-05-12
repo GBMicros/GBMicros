@@ -87,7 +87,7 @@ jobs:
           
           find .. -name "*vfs_suffix.dylib" -ls
           
-          cmake --install . --config Release
+          cmake --install . --config Release --prefix "$GITHUB_WORKSPACE/deploy_root"
           
           #mkdir -p $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n
           #cp $GITHUB_WORKSPACE/deploy_root/share/gbmicros/i18n/*.qm $GITHUB_WORKSPACE/deploy_root/Applications/gbmicros.app/Contents/Resources/i18n/ || echo "No translations found"
